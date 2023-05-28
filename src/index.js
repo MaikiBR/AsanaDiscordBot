@@ -53,14 +53,13 @@ async function getOnProcessTasks() {
 
 async function createTask(nombreTarea, projectId, sectionId, fechaEntrega, assigneeId) {
     const accessToken = process.env.ASANA_ACCESS_TOKEN;
-    console.log(sectionId); 
+    // console.log(sectionId); 
   
     try {
         const response = await axios.post('https://app.asana.com/api/1.0/tasks', {
             data: {
                 name: nombreTarea,
                 projects: [projectId],
-                section: [sectionId],
                 due_on: fechaEntrega,
                 assignee: assigneeId
             }
@@ -71,6 +70,18 @@ async function createTask(nombreTarea, projectId, sectionId, fechaEntrega, assig
         });
     
         const taskCreated = response.data.data;
+        // console.log(taskCreated.gid);
+
+        await axios.post(`https://app.asana.com/api/1.0/sections/${sectionId}/addTask`, {
+            data: {
+                task: taskCreated.gid
+            }
+        }, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
         return taskCreated;
     } catch (error) {
         console.error('Error al crear la tarea en Asana:', error);
