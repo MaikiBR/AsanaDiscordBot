@@ -5,6 +5,8 @@ import axios from 'axios';
 
 config();
 
+//#region .ENV
+
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const GUILD_ID = process.env.GUILD_ID;
@@ -18,6 +20,7 @@ const GID_MIKE = process.env.GID_MIKE;
 const GID_CANO = process.env.GID_CANO;
 const GID_RIGO = process.env.GID_RIGO;
 
+//#endregion
 
 const client = new Client({ 
     intents: [
@@ -28,6 +31,8 @@ const client = new Client({
 })
 
 const rest = new REST({ version: '10' }).setToken(TOKEN);
+
+//#region FUNCTIONS
 
 async function getTasks(sectionId) {
     const accessToken = process.env.ASANA_ACCESS_TOKEN;
@@ -125,17 +130,13 @@ async function deleteTask(taskId){
     }
 }
 
+//#endregion
+
 client.on('ready', () => {
     console.log(`${client.user.username} has logged in!`);
 });
 
-// client.on('interactionCreate', (interaction) => {
-//     if (interaction.isChatInputCommand()) {
-//         console.log("Hello World!");
-//         console.log(interaction.options.getString('op1'));
-//         interaction.reply({ content: "Commands working!" });
-//     }
-// });
+//#region INTERACTIONS
 
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isChatInputCommand() && interaction.commandName === 'tareas') {
@@ -200,19 +201,10 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
+//#endregion
 
 async function main() {
     const commands = [
-        {
-            name: 'testcommand',
-            description: 'Test command',
-            options: [{
-                name: "op1",
-                description: "first option",
-                type: 3,
-                required: true,
-            }],
-        },
         {
             name: 'tareas',
             description: 'Ver todas las tareas en una sección en específico.',
@@ -339,8 +331,3 @@ async function main() {
 }
 
 main();
-
-// client.on('messageCreate', (message) => {
-//     console.log(message.content, ":", message.author.username);
-//     console.log(message.createdAt.toDateString());
-// });
