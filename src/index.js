@@ -29,9 +29,8 @@ const client = new Client({
 
 const rest = new REST({ version: '10' }).setToken(TOKEN);
 
-async function getOnProcessTasks() {
+async function getTasks(sectionId) {
     const accessToken = process.env.ASANA_ACCESS_TOKEN;
-    const sectionId = process.env.GID_ENPROCESO;
 
     try {
         // Tareas del proyecto
@@ -46,7 +45,7 @@ async function getOnProcessTasks() {
   
         return tasks;
     } catch (error) {
-        console.error('Error al obtener las tareas en proceso:', error);
+        console.error('Error al obtener las tareas:', error);
         return [];
     }
 }
@@ -89,8 +88,41 @@ async function createTask(nombreTarea, projectId, sectionId, fechaEntrega, assig
     }
 } 
 
-async function completeTask(taskId, projectId){
+async function completeTask(taskId){
+    const accessToken = process.env.ASANA_ACCESS_TOKEN;
+    
+    try {
+        // Marcar la tarea como completada
+        await axios.put(`https://app.asana.com/api/1.0/tasks/${taskId}`, {
+            data: {
+                completed: true
+            }
+        }, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
 
+        console.log('Tarea completada exitosamente.');
+    } catch (error) {
+        console.error('Error al completar la tarea:', error);
+    }
+}
+
+async function deleteTask(taskId){
+    const accessToken = process.env.ASANA_ACCESS_TOKEN;
+    try {
+        // Eliminar la tarea
+        await axios.delete(`https://app.asana.com/api/1.0/tasks/${taskId}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        console.log('Tarea eliminada exitosamente.');
+    } catch (error) {
+        console.error('Error al eliminar la tarea:', error);
+    }
 }
 
 client.on('ready', () => {
@@ -107,13 +139,21 @@ client.on('ready', () => {
 
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isChatInputCommand() && interaction.commandName === 'tareas') {
-        const tasks = await getOnProcessTasks();
-        // console.log(tasks);
+        const sectionId = interaction.options.getString('seccion');
+        const tasks = await getTasks(sectionId);
   
-        const response = tasks.map((task) => `🔹 ${task.name}`).join('\n');
+        const response = tasks.map((task) => `🔹 ${task.name} \n ◽ (GID: ${task.gid}) \n`).join('\n');
   
-        interaction.reply(`🔴 Tareas en proceso:\n\n${response}`);
-        // console.log(response);
+        interaction.reply({
+            content: `**🐣 Tareas:**\n\n${response}`,
+            embeds: [
+                {
+                    title: "Asana",
+                    description: "🔴 Ingresa al Asana de Durandal DABI \n 📎 https://app.asana.com/0/1203108815398466/board",
+                    color: 0xdc1f0f,
+                },
+            ],
+        });
     }
 });
 
@@ -130,15 +170,36 @@ client.on('interactionCreate', async (interaction) => {
 
         if (taskCreated) {
             interaction.reply(
-                "🔴 Tarea creada exitosamente: " + taskCreated.name + "\n\n" +
-                "📅 " + "Fecha de Entrega: " + taskCreated.due_on + "\n" +
-                "👤 " + "Responsable: " + taskCreated.assignee.name
+                "**🐣 Tarea creada exitosamente: **" + taskCreated.name + "\n\n" +
+                "**📅 " + "Fecha de Entrega: **" + taskCreated.due_on + "\n" +
+                "**👤 " + "Responsable: **" + taskCreated.assignee.name
                 );
         }else{
-            interaction.reply('Ocurrió un error al crear la tarea. ❌')
+            interaction.reply('**Ocurrió un error al crear la tarea. ❌**')
         }
     }
-}); 
+});
+
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.isChatInputCommand() && interaction.commandName === 'completar-tarea') {
+        const taskId = interaction.options.getString('tarea-gid');
+        
+        await completeTask(taskId);
+        
+        interaction.reply('**🐣 Tarea completada exitosamente. ✅**');
+    }
+});
+
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.isChatInputCommand() && interaction.commandName === 'eliminar-tarea') {
+        const taskId = interaction.options.getString('tarea-gid');
+        
+        await deleteTask(taskId);
+        
+        interaction.reply('**🐣 Tarea eliminada exitosamente. 🗑️**');
+    }
+});
+
 
 async function main() {
     const commands = [
@@ -154,7 +215,29 @@ async function main() {
         },
         {
             name: 'tareas',
-            description: 'Ver todas las tareas en proceso.'
+            description: 'Ver todas las tareas en una sección en específico.',
+            options: [
+                {
+                    name: 'seccion',
+                    description: 'Sección',
+                    type: ApplicationCommandOptionType.String,
+                    required: true,
+                    choices: [
+                        {
+                            name: 'Lista de Espera',
+                            value: LE_SECTION_GID,
+                        },
+                        {
+                            name: 'Nuevos Requerimientos',
+                            value: NR_SECTION_GID,
+                        },
+                        {
+                            name: 'En Proceso',
+                            value: OP_SECTION_GID,
+                        },
+                    ]
+                }
+            ]
         },
         {
             name: 'crear-tarea',
@@ -168,7 +251,7 @@ async function main() {
                 },
                 {
                     name: 'seccion',
-                    description: 'Seccion',
+                    description: 'Sección',
                     type: ApplicationCommandOptionType.String,
                     required: true,
                     choices: [
@@ -216,6 +299,30 @@ async function main() {
                         },
                     ]
                 },
+            ]
+        },
+        {
+            name: 'completar-tarea',
+            description: 'Completa una tarea que se encuentre en el workspace.',
+            options: [
+                {
+                    name: 'tarea-gid',
+                    description: 'GID de la tarea a completar',
+                    type: ApplicationCommandOptionType.String,
+                    required: true,
+                }
+            ]
+        },
+        {
+            name: 'eliminar-tarea',
+            description: 'Elimina una tarea que se encuentre en el workspace.',
+            options: [
+                {
+                    name: 'tarea-gid',
+                    description: 'GID de la tarea a eliminar',
+                    type: ApplicationCommandOptionType.String,
+                    required: true,
+                }
             ]
         }
     ];
