@@ -78,6 +78,10 @@ async function createTask(nombreTarea, projectId, sectionId, fechaEntrega, assig
     }
 } 
 
+async function completeTask(taskId, projectId){
+
+}
+
 client.on('ready', () => {
     console.log(`${client.user.username} has logged in!`);
 });
@@ -93,12 +97,12 @@ client.on('ready', () => {
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isChatInputCommand() && interaction.commandName === 'tareas') {
         const tasks = await getOnProcessTasks();
-        console.log(tasks);
+        // console.log(tasks);
   
         const response = tasks.map((task) => `🔹 ${task.name}`).join('\n');
   
         interaction.reply(`🔴 Tareas en proceso:\n\n${response}`);
-        console.log(response);
+        // console.log(response);
     }
 });
 
@@ -111,7 +115,7 @@ client.on('interactionCreate', async (interaction) => {
         const assigneeId = interaction.options.getString('responsable'); 
         const taskCreated = await createTask(task, projectId, sectionId, fechaEntrega, assigneeId);
 
-        console.log(taskCreated);
+        // console.log(taskCreated);
 
         if (taskCreated) {
             interaction.reply(
