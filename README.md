@@ -5,7 +5,7 @@ A Discord bot that seamlessly integrates with Asana API, enabling you to manage 
 ## Features
 
 - **Task Management**: Create, delete, complete, and retrieve tasks from your Asana workspace without leaving Discord.
-- **Task Assignments**: Assign tasks to team members using their Discord usernames.
+- **Task Assignments**: Assign tasks to team members using their user GIDs.
 - **Task Deadlines**: Set deadlines for tasks to keep track of project timelines.
 
 ## Getting Started
