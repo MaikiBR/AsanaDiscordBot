@@ -130,6 +130,10 @@ async function deleteTask(taskId){
     }
 }
 
+async function addSubtask(nombreTarea, taskId){
+    
+}
+
 //#endregion
 
 client.on('ready', () => {
@@ -198,6 +202,17 @@ client.on('interactionCreate', async (interaction) => {
         await deleteTask(taskId);
         
         interaction.reply('**🐣 Tarea eliminada exitosamente. 🗑️**');
+    }
+});
+
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.isChatInputCommand() && interaction.commandName === 'agregar-subtask') {
+        const task = interaction.options.getString('nombre-tarea');
+        const taskId = interaction.options.getString('tarea-gid');
+
+        const subtask = await addSubtask(task, taskId);
+
+        interaction.reply('**🐣 Subtask agregada de manera exitosa. ✅**')
     }
 });
 
